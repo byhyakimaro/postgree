@@ -7,7 +7,7 @@
       "main.cpp",
       "database.cpp",
       "-o",
-      "app.exe",
+      "build/app.exe",
       "-lpqxx",
       "-lpq",
       "-lws2_32",

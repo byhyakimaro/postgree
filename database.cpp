@@ -1,4 +1,5 @@
-#include "includes/database.h"
+#include "modules/database.h"
+#include "includes/dotenv.h"
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <pqxx/zview>
@@ -12,8 +13,17 @@ Database &Database::getInstance() {
 
 Database::Database() {
   try {
-    // Mude os dados conforme seu PostgreSQL
-    std::string conn_str = "dbname=evia user=postgres password=root host=127.0.0.1 port=5432";
+    EnvLoader::load();
+
+    std::string dbname = EnvLoader::get("DB_NAME", "evia");
+    std::string user = EnvLoader::get("DB_USER", "postgres");
+    std::string pass = EnvLoader::get("DB_PASS", "");
+    std::string host = EnvLoader::get("DB_HOST", "127.0.0.1");
+    std::string port = EnvLoader::get("DB_PORT", "5432");
+
+    std::string conn_str = "dbname=" + dbname + " user=" + user +
+                           " password=" + pass + " host=" + host +
+                           " port=" + port;
 
     conn_ = std::make_unique<pqxx::connection>(conn_str);
 
@@ -42,15 +52,13 @@ void Database::createTablesIfNotExist() {
   std::cout << "Tabela 'usuarios' pronta.\n";
 }
 
-void Database::insertUser(const std::string& nome, double valor) {
-    pqxx::work txn(*conn_);
+void Database::insertUser(const std::string &nome, double valor) {
+  pqxx::work txn(*conn_);
 
-    txn.exec(
-        "INSERT INTO usuarios (nome, valor) VALUES ($1, $2)",
-        pqxx::params(nome, valor)
-    );
+  txn.exec("INSERT INTO usuarios (nome, valor) VALUES ($1, $2)",
+           pqxx::params(nome, valor));
 
-    txn.commit();
+  txn.commit();
 }
 
 std::string Database::getAllUsers() {
